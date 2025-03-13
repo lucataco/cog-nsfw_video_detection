@@ -43,7 +43,7 @@ class Predictor(BasePredictor):
     def predict(
         self,
         video: Path = Input(description="Input video"),
-        safety_tolerance: int = Input(description="Safety tolerance, 1 is most strict and 6 is most permissive", default=2, choices=[1, 2, 3, 4, 5, 6]),
+        safety_tolerance: int = Input(description="Safety tolerance, 1 is most strict and 6 is most permissive", default=2, ge=1, le=6, choices=[1, 2, 3, 4, 5, 6]),
     ) -> str:
         """Run prediction on the video"""
         cap = cv2.VideoCapture(str(video))
