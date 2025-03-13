@@ -43,6 +43,7 @@ class Predictor(BasePredictor):
     def predict(
         self,
         video: Path = Input(description="Input video"),
+        safety_tolerance: int = Input(description="Safety tolerance, 1 is most strict and 6 is most permissive", default=2, choices=[1, 2, 3, 4, 5, 6]),
     ) -> str:
         """Run prediction on the video"""
         cap = cv2.VideoCapture(str(video))
@@ -69,7 +70,20 @@ class Predictor(BasePredictor):
 
             frames_analyzed += 1
         cap.release()
-        # If more than 10% of analyzed frames are NSFW, classify the video as NSFW
-        nsfw_ratio = nsfw_count / (frames_analyzed // interval)
-        output = "nsfw" if nsfw_ratio > 0.1 else "normal"
+        
+        # Determine threshold based on safety_tolerance
+        thresholds = {
+            1: 0.01,  # Most strict: 1% of frames
+            2: 0.05,  # 5% of frames
+            3: 0.1,   # Default: 10% of frames
+            4: 0.2,   # 20% of frames
+            5: 0.3,   # 30% of frames
+            6: 0.5,   # Most permissive: 50% of frames
+        }
+        threshold = thresholds[safety_tolerance]
+        
+        # Calculate NSFW ratio and classify the video
+        analyzed_frames = max(1, frames_analyzed // interval)  # Avoid division by zero
+        nsfw_ratio = nsfw_count / analyzed_frames
+        output = "nsfw" if nsfw_ratio > threshold else "normal"
         return output
